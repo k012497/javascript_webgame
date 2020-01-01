@@ -1,3 +1,5 @@
+const totalCount = 7;
+
 var numArray =  Array(45)
                 .fill()
                 .map(function (element, index){
@@ -6,12 +8,12 @@ var numArray =  Array(45)
 
 var shuffle = []; // 랜덤으로 섞기
 while(numArray.length>0){
-    var number = numArray.splice(Math.floor(Math.random() * numArray.length), 1)[0]; 
+    var number = numArray.splice(Math.floor(Math.random() * numArray.length), 1)[0];
     shuffle.push(number);
-}          
+}
 
 var bonus = shuffle[shuffle.length - 1]; // 마지막 숫자 가져오기
-var selected = shuffle.slice(0,6).sort(function (p,c){return p - c;}); // 배열 자름. 6 전까지 (0~5) 6개 
+var selected = shuffle.slice(0,6).sort(function (p,c){return p - c;}); // 배열 자름. 6 전까지 (0~5) 6개
 
 console.log(selected, bonus); // 정렬 : p - c > 0이면 순서를 바꿈
 
@@ -46,21 +48,43 @@ function makeBall(number, color){
     result.appendChild(ball);
 }
 
+// not using closure concept -----------------------------------
+
 // javascript는 단일 스레드 환경이기때문에 sleep 함수가 없다
-function sleep(ms) {
-    return new Promise(resolve=>setTimeout(resolve, ms));
+// function sleep(ms) {
+//     return new Promise(resolve=>setTimeout(resolve, ms));
+// }
+
+// (async function() {
+//     for(var i = 0 ; i < selected.length ; i++){
+//         makeBall(selected[i]);
+//         await sleep(1000);
+//     }
+//
+//     var plus = document.createElement('div');
+//     plus.style.display = 'inline-block';
+//     plus.textContent = ' + ';
+//     result.appendChild(plus);
+//
+//     var ball = makeBall(bonus);
+// })();
+
+//---------------------------------------------------------------
+
+// 클로저 개념을 활용하여 반복문 속 비동기 함수 문제 해결
+for(var i = 0 ; i < selected.length ; i++){
+  (function closure(j){
+    setTimeout(function(){
+      makeBall(selected[j]);
+    }, (j+1) * 1000);
+  })(i);
 }
 
-(async function() {
-    for(var i = 0 ; i < selected.length ; i++){
-        makeBall(selected[i]);
-        await sleep(1000);
-    }
+setTimeout(function(){
+  var plus = document.createElement('div');
+  plus.style.display = 'inline-block';
+  plus.textContent = ' + ';
+  result.appendChild(plus);
 
-    var plus = document.createElement('div');
-    plus.style.display = 'inline-block';
-    plus.textContent = ' + ';
-    result.appendChild(plus);
-
-    var ball = makeBall(bonus);
-})();
+  var ball = makeBall(bonus);
+}, totalCount * 1000);
