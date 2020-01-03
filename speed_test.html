@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title>test your eye speed!</title>
+  <style>
+    #screen {
+      width : 300px;
+      height : 200px;
+      text-align : center;
+      display : table-cell;
+      vertical-align : middle;
+      user-select : none;
+    }
+
+    #screen.waiting {
+      background-color : lightgray;
+    }
+
+    #screen.ready {
+      background-color : red;
+      color : white;
+    }
+
+    #screen.now {
+      background-color : green;
+    }
+  </style>
+</head>
+
+<body>
+  <div id = "screen" class = "waiting">click to start!</div>
+  <script src="speed_test.js"></script>
+</body>
+
+</html>
