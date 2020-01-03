@@ -1,5 +1,17 @@
 var tbody = document.querySelector('#table tbody');
+var result = document.getElementById("h1-result");
 var dataset; // 입력 받은 데이터에 따라 동적으로 tr, td 생성
+var opened = 0; //열린 칸 개수
+var finished = false; // 지뢰를 밟았는가
+
+var code = {
+  mine : '💣',
+  bomb : '💥',
+  initial : 0,
+  opened : 1,
+  eMark : '❗️',
+  qMark : '❓',
+};
 
 function getCurrentIndex(target) {
   var parentTr = target.parentNode;
@@ -17,26 +29,27 @@ function getCurrentIndex(target) {
 
 // 우클릭 이벤트 처리 _ 깃발달기
 function setContextMenu(e) {
-  // var parentTr = e.currentTarget.parentNode;
-  // var parentTbody = e.currentTarget.parentNode.parentNode;
-  // var row = Array.prototype.indexOf.call(parentTbody.children, parentTr); // tr중에 몇 번째에 있는지.
-  // var col = Array.prototype.indexOf.call(parentTr.children, e.currentTarget); // td중에 몇 번째에 있는지. ~prototype : 배열 아닌 애들한테 indexOf 쓰려고
-  // console.log(parentTr, parentTbody, row, col);
-
   var index = getCurrentIndex(e.currentTarget);
 
-  console.log(index.row, index.col, 'after call getCurrentIndex');
-  if (e.currentTarget.textContent === '' || dataset[row][col] === '💣') {
-    e.currentTarget.textContent = '❗️';
-  } else if (e.currentTarget.textContent === '❗️') {
-    e.currentTarget.textContent = '❓';
-  } else if (e.currentTarget.textContent = '❓') {
+  if (e.currentTarget.textContent === '') {
+    e.currentTarget.textContent = code.eMark;
+  } else if (e.currentTarget.textContent === code.eMark) {
+    e.currentTarget.textContent = code.qMark;
+  } else if (e.currentTarget.textContent = code.qMark) {
     e.currentTarget.textContent = '';
   }
 }
 
-document.querySelector('#exec').addEventListener('click', function() {
+function reset(){
   tbody.innerHTML = ''; // 내부 태그들 지워버리기 _ 실행 누를 때마다 리셋
+  finished = false;
+  result.textContent = '';
+  opened = 0;
+}
+
+document.querySelector('#exec').addEventListener('click', function() {
+  reset();
+
   var hor = parseInt(document.querySelector('#hor').value);
   var ver = parseInt(document.querySelector('#ver').value);
   var mine = parseInt(document.querySelector('#mine').value);
@@ -62,10 +75,12 @@ document.querySelector('#exec').addEventListener('click', function() {
     var tr = document.createElement('tr');
     dataset.push(arr);
     for (var j = 0; j < hor; j++) {
-      arr.push(0);
+      arr.push(code.initial);
       var td = document.createElement('td');
       td.addEventListener('contextmenu', function(e) {
         e.preventDefault();
+        // 게임이 종료되었거나, 주변 지뢰 개수가 써 있는 경우에는 이벤트 실행 안 함
+        if(finished || parseInt(e.currentTarget.textContent) > 0) return;
         setContextMenu(e);
       });
 
@@ -74,11 +89,23 @@ document.querySelector('#exec').addEventListener('click', function() {
         var row = index.row;
         var col = index.col;
 
-        console.log(dataset[row][col] === '💣');
-        if (dataset[row][col] === '💣') {
-          // 지뢰 누르면 터지기
-          e.currentTarget.textContent = '💥';
-          alert('fail');
+        if(finished || dataset[row][col] === code.opened
+          || e.currentTarget.textContent === code.eMark || e.currentTarget.textContent === code.qMark) {
+          return;
+        }
+
+        opened += 1;
+        console.log(opened);
+        if(opened >= ver * hor - mine){
+          result.textContent = 'you win!';
+          finished = true;
+        }
+
+        if (dataset[row][col] === code.mine) {
+          // 지뢰 누르면 터지기, 게임종료
+          e.currentTarget.textContent = code.bomb;
+          result.textContent = 'GAME OVER';
+          finished = true;
         } else {
           dataset[row][col] = 1; // 열었을 경우 1
           e.currentTarget.classList.add('opened'); // classList로 td 태그의 클래스에 접근
@@ -96,10 +123,10 @@ document.querySelector('#exec').addEventListener('click', function() {
           }
 
           var count = side.filter(function(v) {
-            return v === '💣';
+            return v === code.mine;
           }).length;
 
-          e.currentTarget.textContent = count;
+          e.currentTarget.textContent = count || ''; // 0이면 표시하지 않게
 
           if (count === 0) {
             // 동시에 8칸 오픈 _ 재귀함수 이용
@@ -119,7 +146,6 @@ document.querySelector('#exec').addEventListener('click', function() {
               tbody.children[row].children[col + 1],]
             );
             console.log(aroundTarget);
-
 
             if(tbody.children[row + 1]){
               aroundTarget = aroundTarget.concat([ // 아랫줄 3칸
@@ -151,10 +177,10 @@ document.querySelector('#exec').addEventListener('click', function() {
 
   // 지뢰 심기
   for (var k = 0; k < shuffle.length; k++) { // e.g. 60
-    var row = Math.floor(shuffle[k] / 10); // e.g. 7 -> 6
-    var col = shuffle[k] % 10; // e.g. 0 -> 0
+    var row = Math.floor(shuffle[k] / ver); // e.g. 7 -> 6
+    var col = shuffle[k] % ver; // e.g. 0 -> 0
     console.log(row, col);
     // tbody.children[row].children[col].textContent = '';
-    dataset[row][col] = '💣'; // 데이터 동기화
+    dataset[row][col] = code.mine; // 데이터 동기화
   }
 });
