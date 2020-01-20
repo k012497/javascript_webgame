@@ -31,14 +31,15 @@ var blockDict = { // 색상, 움직일 수 있는지 여부, 블럭의 모양
         [7, 7, 7, 7],
     ]],
     10: ['red', false, []],
-    20: ['blue', false, []],
+    20: ['green', false, []],
     30: ['orange', false, []],
-    40: ['skyblue', false, []],
+    40: ['navy', false, []],
     50: ['yellowgreen', false, []],
-    60: ['pink', false, []],
+    60: ['violet', false, []],
     70: ['yellow', false, []],
 };
 var tetrisData = [];
+var stopDown = false;
 
 
 function makeCell() { 
@@ -71,11 +72,39 @@ function blockMaker(){
     console.log(block);
     block.forEach(function (tr, i) { 
         tr.forEach(function (td, j) { 
+            // TODO: 이미 다 차있을 경우 게임 오버 
             tetrisData[i][j + 3] = td;
         });
     });
     drwaing();
 }
+
+function tick() { 
+    // 비효율적이지만 전체 화면 새로 그리기
+    // 밑 줄부터 검사하는 포문
+    for (var i = tetrisData.length - 1 ; i >= 0 ; i--){
+        tetrisData[i].forEach(function (td, j) { 
+            if (td > 0 && td < 10){ // 왜 10?
+                if (tetrisData[i + 1] && !stopDown){
+                    console.log("td", td, "tetrisData[i + 1][j]", tetrisData[i + 1][j]);
+                    tetrisData[i + 1][j] = td;
+                    tetrisData[i][j] = 0;
+                } else {
+                    // 더이상 내려갈 칸이 없을 때 블럭 고정 (빈 공간에 고정 / 블럭 사이에 고정)
+                    stopDown = true;
+                    tetrisData[i][j] = td * 10;
+                }
+            }
+        });
+    }
+    if(stopDown){
+        stopDown = false;
+        blockMaker();
+    }
+    drwaing(); // 데이터와 화면 일치
+}
+
+
 
 window.addEventListener('keydown', function (e) { 
     switch(e.code){
@@ -103,3 +132,4 @@ window.addEventListener('keyup', function (e) {
 
 makeCell();
 blockMaker();
+var tick = setInterval(tick, 100);
